@@ -1,0 +1,11 @@
+{
+  "sample_rate": 8000,
+  "duration": 5.0,
+  "n_mels": 128,
+  "n_fft": 1024,
+  "hop_length": 256,
+  "expected_shape": [
+    128,
+    157
+  ]
+}

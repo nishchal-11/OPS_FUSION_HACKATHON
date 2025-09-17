@@ -1,0 +1,25 @@
+{
+  "model_path": "C:\\Users\\Nishc\\OneDrive\\Desktop\\OPS_fusion\\models\\gpu_optimized_cnn_final.keras",
+  "input_shape": [
+    128,
+    157,
+    1
+  ],
+  "training_samples": 2584,
+  "validation_samples": 656,
+  "gpu_used": false,
+  "final_val_auc": 0.922327264239029,
+  "model_params": 110209,
+  "class_weights": {
+    "0": 0.6268801552644347,
+    "1": 2.470363288718929
+  },
+  "preprocessing_config": "C:\\Users\\Nishc\\OneDrive\\Desktop\\OPS_fusion\\data\\full_preprocess_config.json",
+  "training_config": {
+    "epochs": 15,
+    "batch_size": 32,
+    "mixed_precision": false,
+    "optimizer": "Adam",
+    "learning_rate": 0.001
+  }
+}

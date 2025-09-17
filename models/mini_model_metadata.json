@@ -1,0 +1,16 @@
+{
+  "model_type": "RandomForest",
+  "model_path": "c:\\Users\\Nishc\\OneDrive\\Desktop\\OPS_fusion\\notebooks\\..\\models\\mini_rf_model.pkl",
+  "input_shape": [
+    20096
+  ],
+  "preprocessing_config_path": "c:\\Users\\Nishc\\OneDrive\\Desktop\\OPS_fusion\\notebooks\\..\\data\\preprocess_config.json",
+  "class_names": [
+    "Normal",
+    "Abnormal"
+  ],
+  "training_samples": 80,
+  "validation_accuracy": 0.7,
+  "features_per_spectrogram": 20096,
+  "spectrogram_shape": "(128, 157) flattened"
+}
