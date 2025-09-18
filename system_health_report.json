@@ -1,0 +1,28 @@
+{
+  "timestamp": "2025-09-18 10:56:43",
+  "system_health": {
+    "dependencies": true,
+    "audio_processing": true,
+    "original_model": true,
+    "tflite_models": {
+      "Standard TFLite": {
+        "working": true,
+        "inference_time": 19.588708877563477,
+        "prediction": 5.21068177476991e-05
+      },
+      "Quantized TFLite": {
+        "working": true,
+        "inference_time": 14.042139053344727,
+        "prediction": 6.372100324369967e-05
+      }
+    },
+    "mobile_app_files": true,
+    "streamlit": true
+  },
+  "performance_metrics": {
+    "original_model_inference_ms": 607.5496673583984,
+    "tflite_standard_working": true,
+    "tflite_quantized_working": true
+  },
+  "overall_status": "HEALTHY"
+}

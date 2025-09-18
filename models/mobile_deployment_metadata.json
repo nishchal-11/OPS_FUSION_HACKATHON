@@ -1,0 +1,103 @@
+{
+  "model_info": {
+    "name": "Heart Sound Mobile Analyzer",
+    "version": "1.0.0",
+    "type": "tensorflow_lite",
+    "task": "binary_classification",
+    "classes": [
+      "normal",
+      "abnormal"
+    ]
+  },
+  "model_files": {
+    "tflite_model": "heart_sound_mobile.tflite",
+    "tflite_quantized": "heart_sound_mobile_quantized.tflite",
+    "original_keras": "gpu_optimized_cnn_final.keras"
+  },
+  "preprocessing": {
+    "sample_rate": 8000,
+    "duration": 5.0,
+    "n_mels": 128,
+    "n_fft": 1024,
+    "hop_length": 256,
+    "expected_shape": [
+      128,
+      157
+    ]
+  },
+  "inference": {
+    "input_shape": [
+      1,
+      128,
+      128,
+      1
+    ],
+    "input_type": "float32",
+    "output_type": "float32",
+    "classification_threshold": 0.5
+  },
+  "performance": {
+    "target_inference_time_ms": 3000,
+    "mobile_optimized": true
+  },
+  "deployment": {
+    "platform": "mobile_web",
+    "framework": "streamlit",
+    "deployment_type": "on_device"
+  },
+  "original_training_metrics": {},
+  "optimization_metrics": {
+    "original_model": {
+      "size_mb": 1.326064109802246,
+      "total_params": 110209,
+      "input_shape": [
+        null,
+        128,
+        157,
+        1
+      ],
+      "output_shape": [
+        null,
+        1
+      ]
+    },
+    "tflite_standard": {
+      "size_mb": 0.4243278503417969,
+      "conversion_time": 3.069934129714966,
+      "path": "models\\heart_sound_mobile.tflite"
+    },
+    "tflite_quantized": {
+      "size_mb": 0.117218017578125,
+      "conversion_time": 1.681636095046997,
+      "path": "models\\heart_sound_mobile_quantized.tflite"
+    },
+    "performance_standard": {
+      "avg_original_time_ms": 273.9682912826538,
+      "avg_tflite_time_ms": 7.869267463684082,
+      "speedup": 34.8149675363039,
+      "mobile_ready": true,
+      "input_shape": [
+        1,
+        128,
+        157,
+        1
+      ],
+      "input_dtype": "<class 'numpy.float32'>",
+      "output_dtype": "<class 'numpy.float32'>"
+    },
+    "performance_quantized": {
+      "avg_original_time_ms": 101.04207992553711,
+      "avg_tflite_time_ms": 8.53116512298584,
+      "speedup": 11.843878118511107,
+      "mobile_ready": true,
+      "input_shape": [
+        1,
+        128,
+        157,
+        1
+      ],
+      "input_dtype": "<class 'numpy.float32'>",
+      "output_dtype": "<class 'numpy.float32'>"
+    }
+  }
+}
