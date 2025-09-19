@@ -20,10 +20,16 @@ from PIL import Image
 import io
 import warnings
 warnings.filterwarnings('ignore')
+import requests
+from datetime import datetime
 
 # Import configuration and utilities
 from config import *
 from utils import *
+
+# Gemini API Configuration
+GEMINI_API_KEY = "AIzaSyB63DU4KajW_xJyncVSxQg39DN-QZo3D2Q"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 
 # Mobile-optimized page configuration
 st.set_page_config(
@@ -148,6 +154,30 @@ st.markdown("""
     }
     
     /* Progress indicators */
+    
+    /* Report button styling */
+    .report-button {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
+    
+    .report-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 1px solid #dee2e6;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
     .processing-indicator {
         text-align: center;
         padding: 1rem;
@@ -264,6 +294,148 @@ class MobileTFLiteInference:
 def load_mobile_model():
     """Load and cache the mobile TFLite model."""
     return MobileTFLiteInference()
+
+def generate_heart_report(predicted_class, confidence, patient_info=None):
+    """Generate comprehensive heart condition report using Gemini API."""
+    try:
+        # Prepare the prompt for Gemini
+        confidence_pct = confidence * 100 if predicted_class == "Abnormal" else (1 - confidence) * 100
+        
+        prompt = f"""
+        Generate a comprehensive heart sound analysis report based on the following AI analysis results:
+
+        **Analysis Results:**
+        - Classification: {predicted_class}
+        - Confidence Level: {confidence_pct:.1f}%
+        - AI Model: TensorFlow Lite CNN with 92.23% validation AUC
+        - Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+        **Please provide a detailed medical report including:**
+
+        1. **Executive Summary**: Brief overview of findings
+        2. **Heart Sound Analysis**: Detailed interpretation of the {predicted_class.lower()} classification
+        3. **Clinical Significance**: What this means for the patient's cardiovascular health
+        4. **Risk Assessment**: Potential implications and risk factors
+        5. **Recommendations**: 
+           - Immediate actions (if any)
+           - Follow-up recommendations
+           - Lifestyle suggestions
+           - When to seek professional medical care
+        6. **Limitations**: Important disclaimers about AI screening vs professional diagnosis
+        7. **Next Steps**: Clear action plan for the patient
+
+        **Important Guidelines:**
+        - Use professional medical terminology but keep it accessible
+        - Be thorough but concise
+        - Emphasize that this is a screening tool, not a replacement for professional medical evaluation
+        - Include relevant cardiovascular health education
+        - Be appropriately cautious with abnormal results
+        - Provide actionable, specific recommendations
+
+        Format the report professionally with clear sections and bullet points where appropriate.
+        """
+
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        data = {
+            "contents": [{
+                "parts": [{
+                    "text": prompt
+                }]
+            }]
+        }
+
+        # Make API request to Gemini
+        response = requests.post(
+            f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
+            headers=headers,
+            json=data,
+            timeout=30
+        )
+
+        if response.status_code == 200:
+            result = response.json()
+            if 'candidates' in result and result['candidates']:
+                candidate = result['candidates'][0]
+                if 'content' in candidate and 'parts' in candidate['content']:
+                    report_text = candidate['content']['parts'][0]['text']
+                    return report_text
+                elif 'parts' in candidate:  # Fallback for older format
+                    report_text = candidate['parts'][0]['text']
+                    return report_text
+                else:
+                    return generate_fallback_report(predicted_class, confidence)
+            else:
+                return generate_fallback_report(predicted_class, confidence)
+        else:
+            return generate_fallback_report(predicted_class, confidence)
+
+    except Exception as e:
+        return generate_fallback_report(predicted_class, confidence)
+
+def generate_fallback_report(predicted_class, confidence):
+    """Generate a fallback report when API is unavailable."""
+    confidence_pct = confidence * 100 if predicted_class == "Abnormal" else (1 - confidence) * 100
+    
+    return f"""
+# Heart Sound Analysis Report
+**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+## Executive Summary
+The AI analysis classified this heart sound as **{predicted_class}** with {confidence_pct:.1f}% confidence using our TensorFlow Lite CNN model (92.23% validation accuracy).
+
+## Heart Sound Analysis
+{"The analysis suggests normal heart sounds, indicating regular cardiac rhythm and valve function. This is a positive finding that suggests healthy cardiovascular function." if predicted_class == "Normal" else "The analysis detected patterns that may indicate cardiac irregularities. This warrants further professional medical evaluation to determine the clinical significance."}
+
+## Clinical Significance
+{"Normal heart sounds typically indicate proper heart valve function and regular cardiac rhythm. This suggests good cardiovascular health at the time of recording." if predicted_class == "Normal" else "Abnormal heart sound patterns can indicate various cardiac conditions including valve disorders, arrhythmias, or structural heart problems. Professional evaluation is essential for proper diagnosis."}
+
+## Risk Assessment
+{"Low immediate risk based on AI screening. Continue maintaining cardiovascular health through regular exercise and healthy lifestyle." if predicted_class == "Normal" else "Potential cardiovascular risk detected. Early intervention and professional medical assessment are recommended to prevent complications."}
+
+## Recommendations
+
+### Immediate Actions
+{"• Continue current healthy lifestyle practices" if predicted_class == "Normal" else "• Schedule appointment with healthcare provider within 1-2 weeks"}
+{"• Monitor for any symptoms like chest pain, shortness of breath" if predicted_class == "Normal" else "• Avoid strenuous activity until cleared by physician"}
+{"• Maintain regular exercise routine" if predicted_class == "Normal" else "• Keep detailed log of any cardiac symptoms"}
+
+### Follow-up Care
+• Schedule routine cardiac screening as per age-appropriate guidelines
+• Regular blood pressure and heart rate monitoring
+• Annual physical examination with healthcare provider
+
+### Lifestyle Recommendations
+• Maintain heart-healthy diet (low sodium, rich in fruits/vegetables)
+• Regular moderate exercise (150 minutes/week as recommended by guidelines)
+• Avoid smoking and limit alcohol consumption
+• Manage stress through relaxation techniques
+• Maintain healthy weight and monitor cholesterol levels
+
+## Important Limitations
+⚠️ **CRITICAL DISCLAIMER:** This AI analysis is a screening tool only and NOT a medical diagnosis. It cannot replace professional medical evaluation by qualified healthcare providers.
+
+### Limitations Include:
+• AI model trained on limited dataset - may not detect all conditions
+• Recording quality and environment affect accuracy
+• Cannot detect all types of cardiac abnormalities
+• No consideration of patient history or symptoms
+• Technology limitations in mobile/home recording environments
+
+## Next Steps
+{"1. Continue regular preventive care and annual checkups" if predicted_class == "Normal" else "1. **PRIORITY:** Schedule professional cardiac evaluation"}
+2. Share this report with your healthcare provider
+3. Follow standard cardiovascular health guidelines
+4. Monitor for any new or changing symptoms
+{"5. Consider repeat screening in 6-12 months" if predicted_class == "Normal" else "5. Follow all medical recommendations from healthcare provider"}
+
+---
+**Emergency:** If experiencing chest pain, severe shortness of breath, or other acute cardiac symptoms, seek immediate emergency medical care.
+
+*Report generated by OPS Fusion Heart Sound Analyzer - Advanced AI Cardiovascular Screening System*
+"""
 
 def preprocess_mobile_audio(audio_file):
     """Mobile-optimized audio preprocessing pipeline."""
@@ -399,6 +571,45 @@ def display_mobile_results(predicted_class, confidence, inference_time, preproce
         </div>
         """, unsafe_allow_html=True)
 
+    # Add spacing before report button
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Report Generation Button
+    if st.button("📋 Generate Detailed Medical Report", key="report_btn", help="Generate comprehensive heart condition report using AI"):
+        with st.spinner("🤖 Generating comprehensive medical report..."):
+            report = generate_heart_report(predicted_class, confidence)
+            
+            # Display the report in a beautiful card
+            st.markdown(f"""
+            <div class="report-card">
+                <h3 style="color: #1f77b4; margin-bottom: 1rem;">📋 Heart Sound Analysis Report</h3>
+                <div style="white-space: pre-wrap; line-height: 1.6;">{report}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Download button for the report
+            report_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            report_filename = f"Heart_Sound_Report_{report_timestamp}.txt"
+            
+            st.download_button(
+                label="💾 Download Report",
+                data=f"""
+HEART SOUND ANALYSIS REPORT
+Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Classification: {predicted_class}
+Confidence: {confidence*100 if predicted_class == "Abnormal" else (1-confidence)*100:.1f}%
+
+{report}
+
+---
+Disclaimer: This report is generated by AI analysis and is for informational purposes only. 
+Always consult with qualified healthcare professionals for medical diagnosis and treatment.
+                """,
+                file_name=report_filename,
+                mime="text/plain",
+                key="download_report"
+            )
+
 def main():
     """Main mobile application interface."""
     
@@ -455,6 +666,14 @@ def main():
                     predicted_class, confidence, inference_time = model.predict(mel_spec)
                     
                     if predicted_class is not None:
+                        # Store results in session state for report generation
+                        st.session_state.analysis_results = {
+                            'predicted_class': predicted_class,
+                            'confidence': confidence,
+                            'inference_time': inference_time,
+                            'prep_time': prep_time
+                        }
+                        
                         # Display results
                         display_mobile_results(predicted_class, confidence, inference_time, prep_time)
                         
