@@ -1,5 +1,5 @@
-# Core Data Science & ML (minimal set for fast Cloud builds)
-numpy==1.26.4
+# Core Data Science & ML (NumPy 2.2 for Python 3.13 compatibility)
+numpy==2.2.0
 matplotlib==3.8.4
 
 # Audio Processing (librosa requires NumPy < 2)
@@ -7,10 +7,10 @@ librosa==0.10.2.post1
 soundfile==0.12.1
 audioread==3.0.1
 
-# Machine Learning (CPU build for Streamlit Cloud - 2.16 supports Python 3.13)
-tensorflow-cpu==2.16.1
-protobuf==4.25.3
-tensorboard==2.16.2
+# Machine Learning (CPU build for Streamlit Cloud - 2.20 is ONLY version with Python 3.13.9 wheels)
+tensorflow-cpu==2.20.0
+protobuf==5.29.2
+tensorboard==2.20.0
 
 # Additional ML utilities
 joblib==1.4.2
