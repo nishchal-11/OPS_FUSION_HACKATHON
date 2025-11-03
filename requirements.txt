@@ -1,40 +1,35 @@
-# Core Data Science & ML (Streamlit Cloud friendly)
-numpy>=1.24.4,<2.3
-pandas>=2.0
-scikit-learn>=1.2
-matplotlib>=3.7
-seaborn>=0.12
+# Core Data Science & ML (pinned for Streamlit Cloud)
+numpy==1.26.4
+pandas==2.2.2
+scikit-learn==1.4.2
+matplotlib==3.8.4
+seaborn==0.13.2
 
-# Audio Processing
-librosa>=0.10.0
-soundfile>=0.12
-audioread>=3.0.0
+# Audio Processing (librosa requires NumPy < 2)
+librosa==0.10.2.post1
+soundfile==0.12.1
+audioread==3.0.1
 
 # Machine Learning (CPU build for Streamlit Cloud)
 tensorflow-cpu==2.15.0
-protobuf>=3.20.3,<5.0.0
-tensorboard>=2.15
+protobuf==3.20.3
+tensorboard==2.15.2
 
 # Additional ML utilities
-joblib>=1.2
+joblib==1.4.2
 
 # Web App & UI
-streamlit>=1.29
+streamlit==1.32.2
 
 # QR Code Generation
-qrcode[pil]>=7.4
-Pillow>=10.0
-
-# Jupyter & Development (optional; safe on Cloud but not required)
-jupyter>=1.0.0
-ipykernel>=6.0.0
-notebook>=7.0.0
+qrcode[pil]==7.4.2
+Pillow==10.3.0
 
 # Utilities
-tqdm>=4.66.0
-python-dotenv>=1.0.0
-requests>=2.31.0
+tqdm==4.66.4
+python-dotenv==1.0.1
+requests==2.32.3
 
 # Notes:
-# - Removed tensorflow-io and streamlit-webrtc to avoid build issues and because they are not used.
-# - Using tensorflow-cpu for faster, more reliable Streamlit Cloud deployments.
+# - Removed tensorflow-io and streamlit-webrtc (not used; avoid build issues).
+# - Pinned NumPy 1.26.4 to satisfy TensorFlow 2.15 and librosa.
