@@ -1,26 +1,26 @@
-# Core Data Science & ML (NumPy 2.2 for Python 3.13 compatibility)
-numpy==2.2.0
+# Core Data Science & ML
+numpy==1.26.4
 matplotlib==3.8.4
 
-# Audio Processing (librosa requires NumPy < 2)
+# Audio Processing
 librosa==0.10.2.post1
 soundfile==0.12.1
 audioread==3.0.1
 
-# Machine Learning (CPU build for Streamlit Cloud - 2.20 is ONLY version with Python 3.13.9 wheels)
-tensorflow-cpu==2.20.0
-protobuf==5.29.2
-tensorboard==2.20.0
+# Machine Learning (CPU build for Streamlit Cloud)
+tensorflow-cpu==2.18.0
+protobuf==4.25.5
+tensorboard==2.18.0
 
 # Additional ML utilities
 joblib==1.4.2
 
 # Web App & UI
-streamlit==1.32.2
+streamlit==1.40.0
 
 # QR Code Generation
 qrcode[pil]==7.4.2
-Pillow==10.3.0
+Pillow==11.0.0
 
 # Utilities
 tqdm==4.66.4
