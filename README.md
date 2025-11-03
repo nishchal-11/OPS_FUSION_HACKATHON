@@ -15,22 +15,28 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
-### 2. Launch the Complete System
+### 2. Launch the Mobile App
 
 ```powershell
-# Start both main analyzer and mobile recorder
-python launcher.py
+# Windows - Double click or run:
+start_mobile_app.bat
+
+# Or use PowerShell:
+.\start_mobile_app.ps1
+
+# Or directly with Python:
+python -m streamlit run mobile_app.py --server.port 8503
 ```
 
 This will start:
-- **Main Analyzer**: http://localhost:8501 (desktop interface)
-- **Mobile Recorder**: http://localhost:8502 (mobile recording)
+- **Mobile App**: http://localhost:8503 (mobile-optimized interface)
 
 ### 3. Use the System
 
-1. **Desktop**: Open http://localhost:8501 in your browser
-2. **Mobile**: Scan the QR code with your phone → record → download → upload
-3. **Analysis**: Get instant heart sound classification results
+1. **Desktop**: Open http://localhost:8503 in your browser
+2. **Mobile**: Connect your phone to the same WiFi and visit http://192.168.20.26:8503
+3. **Upload** a heart sound audio file or use demo samples
+4. **Analyze** to get instant Normal/Abnormal classification with AI insights
 
 ## Project Structure
 

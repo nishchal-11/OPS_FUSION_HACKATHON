@@ -40,8 +40,8 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# Streamlit
-.streamlit/
+# Streamlit (but keep config for deployment)
+.streamlit/secrets.toml
 
 # Large dataset files (too big for GitHub - 610MB)
 data/physionet2016/
