@@ -1,29 +1,35 @@
-﻿# Python version requirement - MUST be 3.11.x
-# python_requires>=3.11,<3.12
+﻿# CRITICAL: Using TensorFlow Lite instead of TensorFlow CPU
+# TensorFlow-Lite is available for Python 3.13 and works across versions
+# Our models are already .tflite format in models/ directory
+# Note: tensorflow is used for compatibility, not tensorflow-cpu
 
-# Streamlit Web Framework - Compatible with Python 3.11
-streamlit>=1.28.0,<1.41.0
+# Streamlit Web Framework
+streamlit>=1.28.0,<1.50.0
 
-# Core ML & Numeric - Streamlit Cloud compatible versions
-numpy>=1.24.0,<2.0.0
-scipy>=1.11.0,<1.12.0
+# Core ML & Numeric - Works with Python 3.13
+numpy>=1.24.0,<2.1.0
+scipy>=1.11.0,<1.14.0
 
-# Audio Processing - Stable versions for Python 3.11
+# Audio Processing - Stable versions for Python 3.13
 librosa>=0.10.0,<0.11.0
 soundfile>=0.12.0,<0.13.0
 audioread>=3.0.0,<4.0.0
 
-# TensorFlow CPU - Stable version for Streamlit Cloud (Python 3.11 only)
-tensorflow-cpu==2.15.0
+# TensorFlow with broad Python support (not tensorflow-cpu)
+# Using tensorflow 2.15 which has wider wheel availability
+tensorflow==2.15.0
+
+# Required dependencies
 protobuf>=3.20.0,<5.0.0
+h5py>=3.10.0
 
 # Visualization - Compatible versions
-matplotlib>=3.7.0,<3.9.0
+matplotlib>=3.7.0,<4.0.0
 seaborn>=0.12.0,<0.14.0
 
 # QR Code with PIL support
 qrcode>=7.4.0,<8.0.0
-Pillow>=10.0.0,<11.0.0
+Pillow>=10.0.0,<12.0.0
 
 # Utilities
 joblib>=1.3.0,<2.0.0

@@ -76,11 +76,29 @@ st.markdown("""
 
 @st.cache_resource
 def load_model():
-    """Load the trained CNN model with fallback options."""
+    """Load the trained CNN model using TensorFlow Lite (Python 3.13 compatible)."""
     try:
-        from tensorflow.keras.models import load_model
+        import tensorflow as tf
         
-        # Try loading models in order of preference
+        # Try loading TensorFlow Lite models first (Python 3.13 compatible)
+        tflite_models = [
+            "heart_sound_mobile_quantized.tflite",
+            "heart_sound_mobile.tflite"
+        ]
+        
+        for model_name in tflite_models:
+            model_path = MODELS_DIR / model_name
+            if model_path.exists():
+                try:
+                    interpreter = tf.lite.Interpreter(model_path=str(model_path))
+                    interpreter.allocate_tensors()
+                    st.success(f"✅ TFLite Model loaded: {model_name}")
+                    return interpreter
+                except Exception as e:
+                    st.warning(f"Could not load TFLite {model_name}: {e}")
+                    continue
+        
+        # Fallback: Try loading Keras models
         model_names = [
             "gpu_optimized_cnn_final.keras",
             "gpu_optimized_cnn.keras", 
@@ -91,20 +109,19 @@ def load_model():
             model_path = MODELS_DIR / model_name
             if model_path.exists():
                 try:
-                    model = load_model(model_path, compile=False)
-                    # Recompile with optimizer that works on CPU
+                    model = tf.keras.models.load_model(model_path, compile=False)
                     model.compile(
                         optimizer='adam',
                         loss='binary_crossentropy',
                         metrics=['accuracy']
                     )
-                    st.success(f"✅ Model loaded: {model_name}")
+                    st.success(f"✅ Keras Model loaded: {model_name}")
                     return model
                 except Exception as e:
-                    st.warning(f"Could not load {model_name}: {e}")
+                    st.warning(f"Could not load Keras {model_name}: {e}")
                     continue
         
-        st.error("❌ No valid model found. Please ensure model files are in the models directory.")
+        st.error("❌ No valid model found in models/ directory.")
         return None
         
     except Exception as e:
@@ -157,10 +174,31 @@ def preprocess_uploaded_audio(audio_file):
         return None, None, None
 
 def make_prediction(model, preprocessed_audio):
-    """Make prediction using the loaded model."""
+    """Make prediction using the loaded model (supports both TFLite and Keras)."""
     try:
-        prediction = model.predict(preprocessed_audio, verbose=0)
-        confidence = float(prediction[0][0])
+        import tensorflow as tf
+        
+        # Check if it's a TensorFlow Lite interpreter
+        if isinstance(model, tf.lite.Interpreter):
+            # TensorFlow Lite inference
+            input_details = model.get_input_details()
+            output_details = model.get_output_details()
+            
+            # Prepare input
+            input_data = preprocessed_audio.astype(np.float32)
+            model.set_tensor(input_details[0]['index'], input_data)
+            
+            # Run inference
+            model.invoke()
+            
+            # Get output
+            output_data = model.get_tensor(output_details[0]['index'])
+            confidence = float(output_data[0][0])
+        else:
+            # Keras model inference
+            prediction = model.predict(preprocessed_audio, verbose=0)
+            confidence = float(prediction[0][0])
+        
         predicted_class = "Abnormal" if confidence > CLASSIFICATION_THRESHOLD else "Normal"
         return predicted_class, confidence
     except Exception as e:
