@@ -76,14 +76,39 @@ st.markdown("""
 
 @st.cache_resource
 def load_model():
-    """Load the trained CNN model."""
+    """Load the trained CNN model with fallback options."""
     try:
         from tensorflow.keras.models import load_model
-        model_path = MODELS_DIR / "gpu_optimized_cnn_final.keras"
-        model = load_model(model_path)
-        return model
+        
+        # Try loading models in order of preference
+        model_names = [
+            "gpu_optimized_cnn_final.keras",
+            "gpu_optimized_cnn.keras", 
+            "best_cnn_model.keras"
+        ]
+        
+        for model_name in model_names:
+            model_path = MODELS_DIR / model_name
+            if model_path.exists():
+                try:
+                    model = load_model(model_path, compile=False)
+                    # Recompile with optimizer that works on CPU
+                    model.compile(
+                        optimizer='adam',
+                        loss='binary_crossentropy',
+                        metrics=['accuracy']
+                    )
+                    st.success(f"✅ Model loaded: {model_name}")
+                    return model
+                except Exception as e:
+                    st.warning(f"Could not load {model_name}: {e}")
+                    continue
+        
+        st.error("❌ No valid model found. Please ensure model files are in the models directory.")
+        return None
+        
     except Exception as e:
-        st.error(f"Error loading model: {e}")
+        st.error(f"❌ Critical error loading model: {e}")
         return None
 
 @st.cache_data

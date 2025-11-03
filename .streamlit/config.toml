@@ -4,6 +4,7 @@ address = "0.0.0.0"
 port = 8501
 enableCORS = false
 enableXsrfProtection = true
+maxUploadSize = 200
 
 [browser]
 gatherUsageStats = false
@@ -14,3 +15,7 @@ backgroundColor = "#0E1117"
 secondaryBackgroundColor = "#262730"
 textColor = "#FAFAFA"
 font = "sans serif"
+
+[client]
+showErrorDetails = true
+toolbarMode = "minimal"

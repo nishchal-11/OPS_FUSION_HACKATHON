@@ -47,9 +47,10 @@ Thumbs.db
 data/physionet2016/
 data/spectrograms/
 data/*.csv
+!data/preprocess_config.json
 
-# Large model files (keep metadata but exclude heavy .keras files)
-models/*.keras
+# Large model files - Keep small .keras files, exclude logs
+# models/*.keras  # Commented out - keeping models for deployment
 models/tensorboard_logs/
 
 # Certificate files (sensitive)
