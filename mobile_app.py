@@ -28,8 +28,23 @@ from config import *
 from utils import *
 
 # Gemini API Configuration
-GEMINI_API_KEY = "AIzaSyB63DU4KajW_xJyncVSxQg39DN-QZo3D2Q"
+from dotenv import load_dotenv
+load_dotenv()
+
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+
+def get_gemini_api_key() -> str | None:
+    """Fetch Gemini API key from Streamlit secrets or environment.
+    Order of precedence: st.secrets -> OS env var -> None.
+    """
+    try:
+        # Prefer Streamlit Cloud secrets
+        if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
+            return st.secrets["GEMINI_API_KEY"]
+    except Exception:
+        pass
+    # Fallback to environment variable (supports local .env)
+    return os.getenv("GEMINI_API_KEY")
 
 # Mobile-optimized page configuration
 st.set_page_config(
@@ -347,9 +362,14 @@ def generate_heart_report(predicted_class, confidence, patient_info=None):
             }]
         }
 
-        # Make API request to Gemini
+        # Make API request to Gemini (only if API key is configured)
+        api_key = get_gemini_api_key()
+        if not api_key:
+            # No key configured: fall back to offline report
+            return generate_fallback_report(predicted_class, confidence)
+
         response = requests.post(
-            f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
+            f"{GEMINI_API_URL}?key={api_key}",
             headers=headers,
             json=data,
             timeout=30
