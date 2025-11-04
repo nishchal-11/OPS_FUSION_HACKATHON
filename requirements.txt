@@ -5,12 +5,12 @@
 # Streamlit Web Framework
 streamlit>=1.28.0,<1.50.0
 
-# Core ML & Numeric - Works with Python 3.13
+# Core ML & Numeric - Works with Python 3.13 (with pre-built wheels)
 numpy>=1.24.0,<2.1.0
-scipy>=1.11.0,<1.14.0
+scipy>=1.11.0,<1.12.0  # Avoid 1.13.x which requires build from source
 
-# Audio Processing - Stable versions for Python 3.13
-librosa>=0.10.0,<0.11.0
+# Audio Processing - Stable versions with pre-built wheels for Python 3.13
+librosa>=0.9.0,<0.11.0
 soundfile>=0.12.0,<0.13.0
 audioread>=3.0.0,<4.0.0
 
