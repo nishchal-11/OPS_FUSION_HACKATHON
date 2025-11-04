@@ -1,18 +1,17 @@
 ﻿# STREAMLIT CLOUD COMPATIBLE - PYTHON 3.13 SUPPORT
-# Using TensorFlow Lite ONLY (no full TensorFlow)
-# TensorFlow Lite is built-in to Python 3.13 and works great for inference
+# ZERO scipy/librosa build dependencies - Pure Python solution!
+# TensorFlow Lite ONLY (no full TensorFlow)
 
 # Streamlit Web Framework
 streamlit>=1.28.0,<1.50.0
 
-# Core ML & Numeric - Works with Python 3.13 (with pre-built wheels)
+# Core ML & Numeric - Works with Python 3.13 (NO scipy)
 numpy>=1.24.0,<2.1.0
-scipy>=1.11.0,<1.12.0  # Avoid 1.13.x which requires build from source
 
-# Audio Processing - Stable versions with pre-built wheels for Python 3.13
-librosa>=0.9.0,<0.11.0
+# Audio Processing - Lightweight, NO scipy dependency
 soundfile>=0.12.0,<0.13.0
 audioread>=3.0.0,<4.0.0
+# NOTE: librosa removed - it requires scipy which needs Fortran compiler on 3.13
 
 # Visualization - Compatible versions
 matplotlib>=3.7.0,<4.0.0
@@ -35,6 +34,9 @@ scikit-learn>=1.3.0,<1.6.0
 # Optional: Lightweight TensorFlow Lite Runtime (Python 3.13 compatible, ~40MB)
 # tflite-runtime>=2.13.0  # Uncomment if needed, but usually not required on Streamlit Cloud
 
-# NOTE: NO tensorflow package - using TensorFlow Lite which is built-in
+# NOTE: NO tensorflow, scipy, or librosa packages
+# - tensorflow removed (no Python 3.13 wheels)
+# - scipy removed (requires Fortran compiler build)
+# - librosa removed (depends on scipy)
+# Using TensorFlow Lite which is built-in
 # Models are .tflite format which don't need full TensorFlow
-# For Python 3.13: TensorFlow has no wheels, so we avoid it completely
