@@ -1,7 +1,6 @@
-﻿# CRITICAL: Using TensorFlow Lite instead of TensorFlow CPU
-# TensorFlow-Lite is available for Python 3.13 and works across versions
-# Our models are already .tflite format in models/ directory
-# Note: tensorflow is used for compatibility, not tensorflow-cpu
+﻿# STREAMLIT CLOUD COMPATIBLE - PYTHON 3.13 SUPPORT
+# Using TensorFlow Lite ONLY (no full TensorFlow)
+# TensorFlow Lite is built-in to Python 3.13 and works great for inference
 
 # Streamlit Web Framework
 streamlit>=1.28.0,<1.50.0
@@ -14,14 +13,6 @@ scipy>=1.11.0,<1.14.0
 librosa>=0.10.0,<0.11.0
 soundfile>=0.12.0,<0.13.0
 audioread>=3.0.0,<4.0.0
-
-# TensorFlow with broad Python support (not tensorflow-cpu)
-# Using tensorflow 2.15 which has wider wheel availability
-tensorflow==2.15.0
-
-# Required dependencies
-protobuf>=3.20.0,<5.0.0
-h5py>=3.10.0
 
 # Visualization - Compatible versions
 matplotlib>=3.7.0,<4.0.0
@@ -40,3 +31,10 @@ requests>=2.31.0,<3.0.0
 # Core dependencies for functionality
 pandas>=2.0.0,<3.0.0
 scikit-learn>=1.3.0,<1.6.0
+
+# Optional: Lightweight TensorFlow Lite Runtime (Python 3.13 compatible, ~40MB)
+# tflite-runtime>=2.13.0  # Uncomment if needed, but usually not required on Streamlit Cloud
+
+# NOTE: NO tensorflow package - using TensorFlow Lite which is built-in
+# Models are .tflite format which don't need full TensorFlow
+# For Python 3.13: TensorFlow has no wheels, so we avoid it completely

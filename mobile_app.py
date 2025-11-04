@@ -1,6 +1,7 @@
 """
-Heart Sound Mobile Analyzer - Ultra-Fast Analysis
-Streamlit Cloud compatible version with robust error handling
+❤️ Heart Sound Mobile Analyzer
+Ultra-Fast Analysis - Streamlit Cloud Compatible
+Python 3.13 compatible - TensorFlow Lite only (no TensorFlow dependency)
 """
 
 import streamlit as st
@@ -18,12 +19,21 @@ import io
 import warnings
 warnings.filterwarnings('ignore')
 
-# Safe TensorFlow import
+# Try lightweight TensorFlow Lite Runtime (Python 3.13 compatible)
 try:
-    import tensorflow as tf
+    import tflite_runtime.interpreter as tflite
     TF_AVAILABLE = True
-except:
-    TF_AVAILABLE = False
+    USE_TF_LITE_RUNTIME = True
+except ImportError:
+    # Fallback to full TensorFlow (if available)
+    try:
+        import tensorflow as tf
+        TF_AVAILABLE = True
+        USE_TF_LITE_RUNTIME = False
+    except ImportError:
+        TF_AVAILABLE = False
+        tflite = None
+        tf = None
 
 # Import custom modules
 from config import *
@@ -77,51 +87,62 @@ st.markdown("""
 
 @st.cache_resource
 def load_tflite_model():
-    """Load TensorFlow Lite model safely."""
+    """Load TensorFlow Lite model - Python 3.13 compatible."""
     try:
         if not TF_AVAILABLE:
-            return None
-            
-        model_path = MODELS_DIR / "heart_sound_mobile_quantized.tflite"
-        
-        if not model_path.exists():
-            # Try fallback models
-            alternatives = [
-                MODELS_DIR / "heart_sound_mobile.tflite",
-                MODELS_DIR / "gpu_optimized_cnn_final.keras"
-            ]
-            for alt_path in alternatives:
-                if alt_path.exists():
-                    model_path = alt_path
-                    break
-        
-        if not model_path.exists():
-            st.error(f"❌ Model file not found: {model_path}")
+            st.error("❌ TensorFlow not available")
             return None
         
-        # Load based on file type
-        if str(model_path).endswith('.tflite'):
-            interpreter = tf.lite.Interpreter(model_path=str(model_path))
-            interpreter.allocate_tensors()
-            st.success(f"✅ TFLite Model loaded: {model_path.name}")
-            return interpreter
-        else:
-            # Keras model
-            model = tf.keras.models.load_model(str(model_path), compile=False)
-            st.success(f"✅ Keras Model loaded: {model_path.name}")
-            return model
+        # Try .tflite models first
+        model_paths = [
+            MODELS_DIR / "heart_sound_mobile_quantized.tflite",
+            MODELS_DIR / "heart_sound_mobile.tflite",
+            MODELS_DIR / "gpu_optimized_cnn_final.keras",
+        ]
+        
+        for model_path in model_paths:
+            if not model_path.exists():
+                continue
             
+            try:
+                # Load TFLite model
+                if str(model_path).endswith('.tflite'):
+                    if USE_TF_LITE_RUNTIME:
+                        # Use lightweight TensorFlow Lite Runtime
+                        interpreter = tflite.Interpreter(model_path=str(model_path))
+                    else:
+                        # Use full TensorFlow
+                        interpreter = tf.lite.Interpreter(model_path=str(model_path))
+                    
+                    interpreter.allocate_tensors()
+                    st.success(f"✅ Model loaded: {model_path.name}")
+                    return interpreter
+                    
+                else:
+                    # Try Keras model
+                    if not USE_TF_LITE_RUNTIME and tf is not None:
+                        model = tf.keras.models.load_model(str(model_path), compile=False)
+                        st.success(f"✅ Keras model loaded: {model_path.name}")
+                        return model
+                        
+            except Exception as e:
+                st.warning(f"⚠️ Could not load {model_path.name}: {e}")
+                continue
+        
+        st.error("❌ No compatible model found")
+        return None
+        
     except Exception as e:
-        st.error(f"❌ Error loading model: {e}")
+        st.error(f"❌ Error: {e}")
         return None
 
 def make_prediction(model, mel_spec):
-    """Make prediction with the loaded model."""
+    """Make prediction - works with both TFLite and Keras."""
     try:
         if model is None:
             return None, None
         
-        # Handle TFLite interpreter
+        # Get input/output details
         if hasattr(model, 'get_input_details'):
             input_details = model.get_input_details()
             output_details = model.get_output_details()
@@ -146,10 +167,10 @@ def make_prediction(model, mel_spec):
         return prediction, confidence
         
     except Exception as e:
-        st.error(f"❌ Prediction error: {e}")
+        st.error(f"❌ Prediction failed: {e}")
         return None, None
 
-def preprocess_audio(audio_file):
+def preprocess_audio_file(audio_file):
     """Preprocess uploaded audio."""
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmp:
@@ -161,20 +182,19 @@ def preprocess_audio(audio_file):
         
         if len(audio) == 0:
             st.error("Could not load audio file")
-            return None
+            return None, None, None
         
-        # Preprocess (trim silence, normalize, fix duration)
-        from utils import preprocess_audio as preprocess_audio_utils
-        audio = preprocess_audio_utils(audio, sr, AUDIO_DURATION)
+        # Preprocess (from utils)
+        audio_proc = preprocess_audio(audio, sr, AUDIO_DURATION)
         
         # Get mel spectrogram
-        mel_spec = audio_to_melspectrogram(audio, sr, N_MELS, N_FFT, HOP_LENGTH)
+        mel_spec = audio_to_melspectrogram(audio_proc, sr, N_MELS, N_FFT, HOP_LENGTH)
         
         # Add batch and channel dimensions
         mel_spec = np.expand_dims(mel_spec, axis=[0, -1])
         
         os.unlink(tmp_path)
-        return mel_spec, audio, sr
+        return mel_spec, audio_proc, sr
         
     except Exception as e:
         st.error(f"Audio processing error: {e}")
@@ -190,85 +210,105 @@ def plot_spectrogram(mel_spec, sr):
             hop_length=HOP_LENGTH,
             x_axis='time',
             y_axis='mel',
-            ax=ax
+            ax=ax,
+            cmap='viridis'
         )
         plt.colorbar(img, ax=ax, format='%+2.0f dB')
         plt.title('Mel-Spectrogram')
+        plt.tight_layout()
         return fig
-    except:
+    except Exception as e:
+        st.warning(f"Could not plot spectrogram: {e}")
         return None
 
-# Main app
 def main():
+    """Main application."""
     st.markdown('<div class="mobile-header">❤️ Heart Sound Mobile Analyzer</div>', unsafe_allow_html=True)
     
     st.markdown("""
     <div class="mobile-card">
         <h3>🚀 Ultra-Fast AI Analysis</h3>
         <p>Upload heart sound audio for instant AI-powered classification</p>
-        <p><strong>⚡ Lightning Fast</strong> • <strong>🎯 Accurate</strong></p>
+        <p><strong>⚡ Lightning Fast</strong> • <strong>🎯 Accurate</strong> • <strong>📱 Mobile Optimized</strong></p>
     </div>
     """, unsafe_allow_html=True)
+    
+    # Check if TensorFlow is available
+    if not TF_AVAILABLE:
+        st.error("❌ TensorFlow is not installed. Models cannot be loaded.")
+        st.info("This is a demo interface. Please check requirements.txt")
+        return
     
     # Load model
     model = load_tflite_model()
     
     if model is None:
-        st.warning("⚠️ Model loading failed. Please check configuration.")
-        return
+        st.warning("⚠️ Model loading failed - app may not function correctly")
+        st.stop()
     
-    # File uploader
-    st.markdown("### 🎵 Upload Audio")
+    # File uploader section
+    st.markdown("### 🎵 Upload Audio File")
     uploaded_file = st.file_uploader(
-        "Choose audio file",
-        type=['wav', 'mp3', 'mp4', 'webm', 'ogg', 'm4a']
+        "Choose a heart sound audio file",
+        type=['wav', 'mp3', 'mp4', 'webm', 'ogg', 'm4a'],
+        help="Supported formats: WAV, MP3, MP4, WebM, OGG, M4A"
     )
     
-    if uploaded_file:
-        st.info(f"📁 File: {uploaded_file.name}")
+    if uploaded_file is not None:
+        # Display file info
+        file_size_mb = len(uploaded_file.getvalue()) / (1024 * 1024)
+        st.info(f"📁 File: {uploaded_file.name} ({file_size_mb:.2f} MB)")
         
-        # Process
-        with st.spinner("🔄 Processing audio..."):
-            result = preprocess_audio(uploaded_file)
-            
-            if result[0] is not None:
-                mel_spec, audio, sr = result
+        # Process button
+        if st.button("🔍 Analyze Heart Sound", use_container_width=True):
+            with st.spinner("🔄 Processing audio..."):
+                result = preprocess_audio_file(uploaded_file)
                 
-                # Make prediction
-                with st.spinner("🧠 Analyzing..."):
-                    prediction, confidence = make_prediction(model, mel_spec)
-                
-                if prediction:
-                    # Display result
-                    st.markdown("""<div class="result-card">""", unsafe_allow_html=True)
+                if result[0] is not None:
+                    mel_spec, audio_proc, sr = result
                     
-                    if prediction == "Normal":
-                        st.markdown(f'<div class="normal">✅ Normal Heart Sound</div>', unsafe_allow_html=True)
+                    # Make prediction
+                    with st.spinner("🧠 Running AI analysis..."):
+                        prediction, confidence = make_prediction(model, mel_spec)
+                    
+                    if prediction is not None:
+                        # Display result
+                        st.markdown('<div class="result-card">', unsafe_allow_html=True)
+                        
+                        if prediction == "Normal":
+                            st.markdown(f'<div class="normal">✅ NORMAL HEART SOUND</div>', unsafe_allow_html=True)
+                        else:
+                            st.markdown(f'<div class="abnormal">⚠️ ABNORMAL HEART SOUND</div>', unsafe_allow_html=True)
+                        
+                        st.markdown(f"**Confidence Score:** {confidence*100:.1f}%", unsafe_allow_html=True)
+                        st.markdown('</div>', unsafe_allow_html=True)
+                        
+                        # Visualizations
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            st.subheader("🌊 Waveform")
+                            fig_wave = plt.figure(figsize=(10, 3))
+                            plt.plot(audio_proc, linewidth=1)
+                            plt.title("Audio Waveform")
+                            plt.xlabel("Sample")
+                            plt.ylabel("Amplitude")
+                            plt.grid(alpha=0.3)
+                            st.pyplot(fig_wave, use_container_width=True)
+                            plt.close(fig_wave)
+                        
+                        with col2:
+                            st.subheader("🎵 Mel-Spectrogram")
+                            fig_spec = plot_spectrogram(mel_spec, sr)
+                            if fig_spec:
+                                st.pyplot(fig_spec, use_container_width=True)
+                                plt.close(fig_spec)
+                        
+                        st.success("✅ Analysis complete!")
                     else:
-                        st.markdown(f'<div class="abnormal">⚠️ Abnormal Heart Sound</div>', unsafe_allow_html=True)
-                    
-                    st.markdown(f"**Confidence:** {confidence*100:.1f}%", unsafe_allow_html=True)
-                    st.markdown("""</div>""", unsafe_allow_html=True)
-                    
-                    # Visualization
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        st.markdown("**Waveform**")
-                        fig_wave = plt.figure(figsize=(10, 3))
-                        plt.plot(audio)
-                        plt.title("Audio Waveform")
-                        st.pyplot(fig_wave)
-                        plt.close(fig_wave)
-                    
-                    with col2:
-                        st.markdown("**Mel-Spectrogram**")
-                        fig_spec = plot_spectrogram(mel_spec, sr)
-                        if fig_spec:
-                            st.pyplot(fig_spec)
-                            plt.close(fig_spec)
-            else:
-                st.error("Failed to process audio")
+                        st.error("Failed to make prediction")
+                else:
+                    st.error("Failed to process audio")
 
 if __name__ == "__main__":
     main()
